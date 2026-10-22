@@ -1,0 +1,30 @@
+# Nominal ("neatly stacked") Jenga tower definition.
+#
+# Tower frame (origin = tower center axis, at the bottom face of layer 1):
+#   +x : to the right as seen from the FRONT face (tag strip ids 0,1)
+#   +y : away from the front viewer (toward the BACK face)
+#   +z : up
+# Block local frame: x = long axis, y = width, z = height, origin at block center.
+
+block:
+  length_mm: 115.0
+  width_mm: 38.0
+  height_mm: 23.0
+
+tower:
+  num_layers: 17
+  blocks_per_layer: 3
+  # Odd layers (1,3,..): long side visible from front, long axis along tower x,
+  #   m=1 is the front-most block (smallest y).
+  # Even layers (2,4,..): end faces visible from front, long axis along tower y,
+  #   m=1 is the left-most block (smallest x) as seen from front.
+
+tags:
+  family: tag36h11
+  size_mm: 36.0            # MEASURE after printing (black square side) and update
+  strip_center_gap_mm: 72.0
+  # face k: 0=front, 1=right, 2=back, 3=left (clockwise from above); ids 2k (left), 2k+1 (right)
+
+# Pose of the tower frame relative to the tag map frame.
+# Filled in by the reference-capture calibration (identity until then).
+T_tagmap_tower: null

@@ -1,0 +1,10 @@
+# environment
+.venv/
+__pycache__/
+*.pyc
+
+# recorded camera data (hundreds of MB; regenerate with the tools)
+data/
+
+# raw phone photo of the jig
+20261022_172041.jpg

@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JENGA_6DOF 진행 보고서</title>
+<style>
+:root {
+  --bg: #fbfaf8; --surface: #ffffff; --surface-2: #f3f1ed; --text: #1f1d1a; --muted: #6b665e;
+  --border: #e3dfd8; --accent: #2f6f5e; --accent-soft: #e3efe9; --warn: #a2601a; --warn-soft: #f7ecdd;
+  --bad: #a3342b; --good: #2f6f5e; --series-a: #2f6f5e; --series-b: #c27a2c; --grid: #e7e3dc;
+  --code-bg: #f3f1ed;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161514; --surface: #1e1d1b; --surface-2: #262522; --text: #ece9e4; --muted: #a49e95;
+    --border: #34322e; --accent: #7cc4ad; --accent-soft: #1f302a; --warn: #e0a35c; --warn-soft: #33281b;
+    --bad: #e5776c; --good: #7cc4ad; --series-a: #7cc4ad; --series-b: #e0a35c; --grid: #2e2c29;
+    --code-bg: #262522;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161514; --surface: #1e1d1b; --surface-2: #262522; --text: #ece9e4; --muted: #a49e95;
+  --border: #34322e; --accent: #7cc4ad; --accent-soft: #1f302a; --warn: #e0a35c; --warn-soft: #33281b;
+  --bad: #e5776c; --good: #7cc4ad; --series-a: #7cc4ad; --series-b: #e0a35c; --grid: #2e2c29;
+  --code-bg: #262522;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15.5px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+main { max-width: 980px; margin: 0 auto; padding: 40px 16px 80px; }
+header.hero { margin-bottom: 28px; }
+.eyebrow { color: var(--accent); font-weight: 600; letter-spacing: .04em; font-size: 13px; text-transform: uppercase; }
+h1 { font-size: 30px; line-height: 1.25; margin: 6px 0 10px; letter-spacing: -0.01em; }
+.lede { color: var(--muted); max-width: 760px; margin: 0; }
+h2 { font-size: 21px; margin: 48px 0 14px; padding-top: 8px; border-top: 1px solid var(--border); }
+h3 { font-size: 16.5px; margin: 26px 0 10px; }
+p { margin: 10px 0; }
+a { color: var(--accent); }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-size: 0.9em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font-size: 13px; line-height: 1.55; }
+pre code { background: none; padding: 0; }
+nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin: 22px 0; }
+nav.toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 28px; }
+nav.toc li { margin: 2px 0; break-inside: avoid; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 18px 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.card .k { color: var(--muted); font-size: 13px; }
+.card .v { font-size: 22px; font-weight: 650; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.card .s { font-size: 13px; color: var(--muted); }
+.card.warn .v { color: var(--warn); }
+.card.good .v { color: var(--good); }
+.table-wrap { overflow-x: auto; margin: 12px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.pill.good { background: var(--accent-soft); color: var(--good); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.callout { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 10px 10px 0; margin: 14px 0; }
+.callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+figure { margin: 18px 0; }
+figure img { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border); display: block; }
+figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.figs { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; align-items: start; }
+.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.chart { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.chart h4 { margin: 0 0 4px; font-size: 14px; }
+.chart .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 6px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 4px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+ol.steps, ul.tight { padding-left: 22px; }
+ol.steps li, ul.tight li { margin: 4px 0; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; }
+.box h4 { margin: 2px 0 6px; font-size: 14.5px; }
+footer { color: var(--muted); font-size: 13px; margin-top: 56px; border-top: 1px solid var(--border); padding-top: 14px; }
+@media (max-width: 720px) {
+  h1 { font-size: 24px; }
+  nav.toc ol { columns: 1; }
+  .figs, .charts, .two { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<header class="hero">
+  <div class="eyebrow">CES2027 · JENGA_6DOF · 2026-10-21 ~ 10-22</div>
+  <h1>젠가 블록 6DOF 편차 추정: 진행 보고서</h1>
+  <p class="lede">xArm7 ×2 + Allegro V6F ×2 젠가 시연에서, n층 m번째 블록이 “깔끔하게 쌓은 기준 상태” 대비 얼마나 밀리고 돌아갔는지를 Orbbec Gemini 305 RGB-D로 추정한다. 이번 세션은 <b>손으로 카메라를 들고 측정하는 단계(M0~M2)</b>까지 진행했다.</p>
+</header>
+
+<nav class="toc" aria-label="목차">
+  <ol>
+    <li><a href="#summary">한눈에 보기</a></li>
+    <li><a href="#goal">목표와 전제</a></li>
+    <li><a href="#process">진행 과정</a></li>
+    <li><a href="#accuracy">정확도 결과</a></li>
+    <li><a href="#problems">문제와 해결</a></li>
+    <li><a href="#height">층 높이별 정확도 · 개선 아이디어</a></li>
+    <li><a href="#next">앞으로 할 일</a></li>
+    <li><a href="#usage">사용법 · 파일 구조</a></li>
+  </ol>
+</nav>
+
+<section id="summary">
+<h2>1. 한눈에 보기</h2>
+<div class="cards">
+  <div class="card good"><div class="k">블록 밀기 dx (8층 2번)</div><div class="v">±0.5 mm</div><div class="s">실제 0/5/10 → 0/4.5/9.8 mm</div></div>
+  <div class="card good"><div class="k">블록 회전 yaw (9층 1번)</div><div class="v">±0.6°</div><div class="s">−2.5° → −2.0°, −5.0° → −4.4~−5.5°</div></div>
+  <div class="card good"><div class="k">2~17층 커버리지 (REL)</div><div class="v">±2 mm · ±2°</div><div class="s">정리 상태, 측정 실패 없음</div></div>
+  <div class="card warn"><div class="k">기준 대비 절대값 (ABS)</div><div class="v">±1 → ±7 mm</div><div class="s">아래층 → 위층, 손 촬영 한계 → M3에서 해결</div></div>
+</div>
+
+<div class="figs">
+  <figure>
+    <img src="img/ref_overlay_seams.jpg" alt="기준 모델의 블록 윤곽(초록)을 실제 타워 세 면에 겹친 사진">
+    <figcaption>기준 타워 캘리브레이션: 모델의 층/블록 경계(초록)가 실제 틈과 1~2 px 이내로 일치.</figcaption>
+  </figure>
+  <figure>
+    <img src="img/live_pull_8_2.jpg" alt="8층 2번 블록을 앞으로 뺀 상태에서 기준(초록)과 추정(빨강) 윤곽이 표시된 실시간 화면">
+    <figcaption>실시간 화면: 초록 = 기준 위치, 빨강 = 추정 위치 (8층 2번을 앞으로 뺀 상태, 초기 버전).</figcaption>
+  </figure>
+</div>
+</section>
+
+<section id="goal">
+<h2>2. 목표와 전제</h2>
+<ul class="tight">
+  <li><b>목표</b>: “n층 m번째 블록을 빼라” 명령 시, 그 블록이 기준 대비 얼마나 틀어졌는지(dx, dy, dz, roll, pitch, yaw)를 로봇에 전달.</li>
+  <li><b>핵심 아이디어</b>: 타워는 매번 정리해서 시작하므로 <b>기준 자세는 하드코딩</b>하고, 카메라로는 <b>기준에서의 편차만 보정</b>한다 (탐지 문제 → 보정 문제).</li>
+  <li><b>물리적 제약</b>: 블록은 아래층 위에 놓여 z·roll·pitch는 거의 변하지 않는다. 실제로 변하는 것은 긴 방향 밀림(dx), 옆 밀림(dy), 수평 회전(yaw). → roll/pitch/dz는 강한 사전값으로 붙잡고 검증용으로만 출력.</li>
+</ul>
+
+<h3>하드웨어 / 환경</h3>
+<div class="table-wrap"><table>
+  <tr><th>항목</th><th>내용</th></tr>
+  <tr><td>카메라</td><td>Orbbec Gemini 305 (USB), 컬러 1280×720, depth 1280×800, 프리셋 <code>Close Range High Accuracy</code></td></tr>
+  <tr><td>블록</td><td>약 115 × 38 × 23 mm (fit 높이 <b>22.36 mm</b>), 17층, 층당 3개 밀착</td></tr>
+  <tr><td>지그</td><td>검은 박스(옆면 약 125 × 50 mm) 위 타워, 1층은 테두리에 반쯤 가려짐</td></tr>
+  <tr><td>태그</td><td>AprilTag 36h11, 36 mm, 박스 네 옆면에 2개씩 띠 (118 × 46 mm, 중심 간격 72 mm)</td></tr>
+  <tr><td>SW</td><td>Python 3.10 venv, pyorbbecsdk2 2.1.2, OpenCV 4.11, Open3D 0.18, ROS2 Humble</td></tr>
+</table></div>
+
+<h3>좌표 / 번호 규칙</h3>
+<ul class="tight">
+  <li><b>앞면</b> = 태그 id 0·1 띠 면. 위에서 봤을 때 시계방향으로 오른쪽(2·3), 뒤(4·5), 왼쪽(6·7).</li>
+  <li><b>n</b> = 1(맨 아래) … 17. 홀수층은 앞에서 긴 면이 보이고 m=1이 가장 앞. 짝수층은 앞에서 끝면이 보이고 m=1이 왼쪽.</li>
+  <li><b>타워 좌표계</b>: 원점 = 중심축 & 1층 바닥, +x 오른쪽, +y 뒤쪽, +z 위.</li>
+  <li><b>블록 좌표계</b> (결과 delta 기준): x = 긴 방향, y = 폭, z = 위. 홀수층 블록 +x = 타워 오른쪽, 짝수층 블록 +x = 타워 뒤쪽. 예: 짝수층 블록을 앞으로 빼면 dx 음수.</li>
+</ul>
+</section>
+
+<section id="process">
+<h2>3. 진행 과정</h2>
+
+<h3>M0. 카메라 연결</h3>
+<ol class="steps">
+  <li>venv 구성, <code>pyorbbecsdk2</code> 설치, USB udev 규칙 설치.</li>
+  <li>컬러 / color 정렬 depth 스트림 확인 (<code>tools/stream_check.py</code>).</li>
+  <li>왜곡 모델이 <b>8계수 rational</b>임을 발견 → 5계수만 쓰던 코드 수정.</li>
+</ol>
+
+<h3>M1-1. 태그 맵 캘리브레이션</h3>
+<p>타워를 한 바퀴 돌며 두 면의 태그가 동시에 보이는 모서리 뷰 43장을 자동 저장하고, 띠(태그 2개)를 강체로 보고 카메라 자세 + 면 자세를 번들 조정.</p>
+<div class="table-wrap"><table>
+  <tr><th>지표</th><th class="num">값</th><th>기대</th></tr>
+  <tr><td>재투영 RMS</td><td class="num"><b>0.67 px</b> (최대 5.2)</td><td>&lt; 1 px</td></tr>
+  <tr><td>이웃 면 사이 각도</td><td class="num">89.93 ~ 90.13°</td><td>90°</td></tr>
+  <tr><td>마주보는 면 사이 각도</td><td class="num">179.41 ~ 179.50°</td><td>180°</td></tr>
+  <tr><td>마주보는 띠 평면 간격</td><td class="num">130.7 / 131.6 mm</td><td>박스 폭 + 종이</td></tr>
+</table></div>
+
+<h3>M1-2. 기준 타워 위치 맞추기</h3>
+<p>수평 위치·방향은 지그에 끼워진 타워이므로 네 띠 평면의 중심에서 계산. 높이는 정리된 타워 사진 20장에서 <b>층 사이 어두운 틈과 모델 층 경계가 맞아떨어지는 1층 바닥 높이 z0와 블록 높이 h</b>를 탐색.</p>
+<div class="table-wrap"><table>
+  <tr><th>결과</th><th class="num">값</th><th>비고</th></tr>
+  <tr><td>1층 바닥 높이</td><td class="num">띠 중심 + 27.0 mm</td><td>바닥에서 ≈ 50 mm = 실측 박스 높이와 일치</td></tr>
+  <tr><td>블록 높이</td><td class="num"><b>22.36 mm</b></td><td>공칭 23 mm로 두면 17층에서 약 11 mm 누적 오차</td></tr>
+  <tr><td>탐색 프로파일</td><td class="num">단일 피크</td><td>한 층 어긋남 같은 모호성 없음</td></tr>
+</table></div>
+
+<h3>M2. 블록 6DOF 추정 + 실시간 도구</h3>
+<div class="two">
+  <div class="box">
+    <h4>추정 파이프라인 (<code>estimator.py</code>)</h4>
+    <ol class="steps">
+      <li><b>태그로 카메라 자세</b> (대략, mm 단위 오차)</li>
+      <li><b>국소 보정</b>: 위아래 층(n±1, n±2) 바깥 면을 depth에 맞춰 카메라 자세 보정 (목표 블록 중심 기준, 사전값 ±6 mm/±2°)</li>
+      <li><b>블록 fit</b>: 보이는 면 depth(테두리 5 mm 제외) + 윤곽의 밝기 기울기 + roll/pitch/dz 사전값을 IRLS로 최소화, 면 법선 방향 오프셋은 depth만으로 재계산</li>
+      <li><b>REL</b>(위아래 층 대비) / <b>ABS</b>(기준 대비) 두 결과</li>
+      <li>보이는 면 종류별 실험 1σ 하한으로 신뢰도 부여</li>
+    </ol>
+  </div>
+  <div class="box">
+    <h4>실시간 도구 (<code>live_block.py</code>)</h4>
+    <ul class="tight">
+      <li>터미널 <code>n m</code> 입력 → 기준(초록)/추정(빨강) 윤곽 + ABS·REL 6DOF 표시</li>
+      <li>최근 15개를 <b>축별 가중 중앙값</b>으로 합산 (yaw는 긴 옆면 시점이 주도)</li>
+      <li>측정 프레임·depth·결과 <b>자동 녹화</b> + <code>label</code></li>
+      <li>ROS2: <code>/jenga/block_pose</code>, <code>/jenga/block_nominal_pose</code>, <code>/jenga/block_delta</code>(ABS), <code>/jenga/block_delta_rel</code>(REL)</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="accuracy">
+<h2>4. 정확도 결과</h2>
+<p>모든 실측은 손으로 들고 25~35 cm (위층은 40~45 cm), 15개 이상 합산 기준.</p>
+
+<div class="charts">
+  <div class="chart">
+    <h4>블록 밀기: 8층 2번 dx</h4>
+    <p class="sub">실제 당김 대비 측정 크기 (mm)</p>
+    <svg viewBox="0 0 320 210" role="img" aria-label="실제 0, 5, 10 mm 당김에 대해 최종 측정 0, 4.5, 9.8 mm, 구 설정 2차 측정 0, 3.4, 7.3 mm">
+      <!-- axes: x 0..10 -> 40..300, y 0..11 -> 180..15 -->
+      <g stroke="var(--grid)" stroke-width="1">
+        <line x1="40" y1="180" x2="300" y2="180"/><line x1="40" y1="135" x2="300" y2="135"/>
+        <line x1="40" y1="90" x2="300" y2="90"/><line x1="40" y1="45" x2="300" y2="45"/>
+      </g>
+      <line x1="40" y1="180" x2="300" y2="30" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1"/>
+      <text x="34" y="184" text-anchor="end">0</text><text x="34" y="139" text-anchor="end">3</text>
+      <text x="34" y="94" text-anchor="end">6</text><text x="34" y="49" text-anchor="end">9</text>
+      <text x="40" y="198" text-anchor="middle">0</text><text x="170" y="198" text-anchor="middle">5</text>
+      <text x="300" y="198" text-anchor="middle">10 mm</text>
+      <polyline points="40,180 170,129.5 300,70.5" fill="none" stroke="var(--series-b)" stroke-width="2"/>
+      <g fill="var(--series-b)"><circle cx="40" cy="180" r="3.5"/><circle cx="170" cy="129.5" r="3.5"/><circle cx="300" cy="70.5" r="3.5"/></g>
+      <polyline points="40,180 170,112.5 300,33" fill="none" stroke="var(--series-a)" stroke-width="2.5"/>
+      <g fill="var(--series-a)"><circle cx="40" cy="180" r="4"/><circle cx="170" cy="112.5" r="4"/><circle cx="300" cy="33" r="4"/></g>
+      <text x="292" y="28" text-anchor="end" style="fill:var(--series-a)">9.8</text>
+      <text x="164" y="106" text-anchor="end" style="fill:var(--series-a)">4.5</text>
+      <text x="292" y="86" text-anchor="end" style="fill:var(--series-b)">7.3</text>
+    </svg>
+    <div class="legend"><span><i style="background:var(--series-a)"></i>최종 (새 센서 설정)</span><span><i style="background:var(--series-b)"></i>구 설정 (약 70~80%)</span><span>점선 = 이상적</span></div>
+  </div>
+  <div class="chart">
+    <h4>블록 회전: 9층 1번 yaw</h4>
+    <p class="sub">기대 회전 대비 측정 크기 (°, 정리 상태 대비)</p>
+    <svg viewBox="0 0 320 210" role="img" aria-label="기대 2.5도에 측정 2.0도, 기대 5.0도에 재측정 4.4에서 5.5도">
+      <!-- x 0..5 -> 40..300 ; y 0..6 -> 180..15 -->
+      <g stroke="var(--grid)" stroke-width="1">
+        <line x1="40" y1="180" x2="300" y2="180"/><line x1="40" y1="125" x2="300" y2="125"/>
+        <line x1="40" y1="70" x2="300" y2="70"/><line x1="40" y1="15" x2="300" y2="15"/>
+      </g>
+      <line x1="40" y1="180" x2="300" y2="42.5" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1"/>
+      <text x="34" y="184" text-anchor="end">0</text><text x="34" y="129" text-anchor="end">2</text>
+      <text x="34" y="74" text-anchor="end">4</text><text x="34" y="19" text-anchor="end">6</text>
+      <text x="40" y="198" text-anchor="middle">0</text><text x="170" y="198" text-anchor="middle">2.5</text>
+      <text x="300" y="198" text-anchor="middle">5.0°</text>
+      <!-- range bar for 10mm retake: 4.4..5.5 -->
+      <line x1="300" y1="59" x2="300" y2="28.75" stroke="var(--series-a)" stroke-width="6" stroke-linecap="round" opacity=".45"/>
+      <polyline points="40,180 170,125 300,45" fill="none" stroke="var(--series-a)" stroke-width="2.5"/>
+      <g fill="var(--series-a)"><circle cx="40" cy="180" r="4"/><circle cx="170" cy="125" r="4"/><circle cx="300" cy="45" r="4"/></g>
+      <circle cx="300" cy="100.25" r="4" fill="none" stroke="var(--series-b)" stroke-width="2"/>
+      <text x="292" y="124" text-anchor="end" style="fill:var(--series-b)">1차 2.9 (덜 당겨짐)</text>
+      <text x="164" y="118" text-anchor="end" style="fill:var(--series-a)">2.0</text>
+    </svg>
+    <div class="legend"><span><i style="background:var(--series-a)"></i>측정 (10 mm는 재측정 범위 4.4~5.5°)</span><span><i style="background:var(--series-b)"></i>1차 10 mm</span></div>
+  </div>
+</div>
+
+<h3>4.1 블록 밀기: 8층 2번 (가운데 블록, 끝면만 보임)</h3>
+<div class="table-wrap"><table>
+  <tr><th>실제 당김</th><th class="num">1차 (구 설정, 자 대충)</th><th class="num">2차 (구 설정)</th><th class="num">최종 (새 센서 설정)</th></tr>
+  <tr><td>0 mm</td><td class="num">−0.6</td><td class="num">−0.5</td><td class="num"><b>0.0</b></td></tr>
+  <tr><td>5 mm</td><td class="num">−6.5</td><td class="num">−3.9</td><td class="num"><b>−4.5</b></td></tr>
+  <tr><td>10 mm</td><td class="num">−9.4</td><td class="num">−7.8</td><td class="num"><b>−9.8</b> (앞 −9.8 / 뒤 −10.2)</td></tr>
+</table></div>
+
+<h3>4.2 블록 회전: 9층 1번 (바깥 블록, 긴 옆면 보임)</h3>
+<div class="table-wrap"><table>
+  <tr><th>오른쪽 끝 당김</th><th class="num">기대 yaw</th><th class="num">측정 yaw</th><th class="num">기대 dy</th><th class="num">측정 dy</th></tr>
+  <tr><td>5 mm</td><td class="num">−2.5°</td><td class="num"><b>−2.0°</b></td><td class="num">−2.5 mm</td><td class="num">−2.0 mm</td></tr>
+  <tr><td>10 mm (1차)</td><td class="num">−5.0°</td><td class="num">−2.9°</td><td class="num">−5 mm</td><td class="num">−3.1 mm</td></tr>
+  <tr><td>10 mm (재측정 2회)</td><td class="num">−5.0°</td><td class="num"><b>−4.4 ~ −5.5°</b></td><td class="num">−5 mm</td><td class="num"><b>−4.0 ~ −4.8 mm</b></td></tr>
+</table></div>
+<div class="callout warn">1차 10 mm는 depth 원본에서도 오른쪽 끝이 약 6 mm만 나와 있어 실제로 덜 당겨진 것으로 판단. 재측정 시 자로 잰 양 끝 값은 아직 미수령이며, 받으면 최종 비교 예정. 정리 상태에서 이 블록은 원래 약 −1.1° 틀어져 있었다.</div>
+
+<h3>4.3 높이별 커버리지 (정리 상태: 모두 0 근처가 정상)</h3>
+<div class="table-wrap"><table>
+  <tr><th>블록</th><th>위치</th><th>REL</th><th>ABS</th><th>판정</th></tr>
+  <tr><td>2층 2번</td><td>맨 아래</td><td>dx +0.8, dy −0.5, dz −1.2 mm, 각도 ±0.5°</td><td>dx +0.7, dy −0.6, dz −1.2 mm</td><td><span class="pill good">둘 다 정상</span></td></tr>
+  <tr><td>8층 2번</td><td>중간</td><td>0.0 mm</td><td>+2.9 mm (실제 타워가 약 3 mm 뒤, 기준 사진에서도 동일)</td><td><span class="pill good">정상</span></td></tr>
+  <tr><td>16층 2번</td><td>위</td><td>dx −0.3, dy −0.1, dz −0.6 mm, yaw +1.7°</td><td>dx 앞 +6.9 / 뒤 −4.1 (시점별 부호 반대)</td><td><span class="pill warn">ABS 흔들림</span></td></tr>
+  <tr><td>17층 1번</td><td>맨 위</td><td>dx −1.0, dy −0.2, dz +0.1 mm, 각도 ±1°</td><td>dy +3.8 mm</td><td><span class="pill warn">ABS 흔들림</span></td></tr>
+</table></div>
+
+<h3>4.4 보이는 면에 따른 정확도 (기준 사진 45~50 cm, 단일 프레임)</h3>
+<div class="table-wrap"><table>
+  <tr><th>보이는 면</th><th class="num">dx</th><th class="num">yaw</th></tr>
+  <tr><td>끝면만 (폭 38 mm)</td><td class="num">±3.8 mm</td><td class="num">±6.7°</td></tr>
+  <tr><td>끝면 + 긴 옆면 (115 mm)</td><td class="num">±2.1 mm</td><td class="num">±2.3°</td></tr>
+</table></div>
+<p>끝면은 1° 돌아가도 양쪽 depth 차이가 0.66 mm뿐이라 yaw가 약하다. 긴 옆면은 같은 1°에 2 mm 차이. 다중 프레임 합산과 25~35 cm 근접으로 실측은 4.1~4.3까지 개선.</p>
+
+<h3>4.5 블록 종류별 예상 오차 (손 촬영, 합산 기준)</h3>
+<div class="table-wrap"><table>
+  <tr><th>축</th><th>가운데 블록 (m=2)</th><th>바깥 블록 (m=1, 3)</th><th>근거</th></tr>
+  <tr><td>dx (긴 방향)</td><td><b>±1 mm</b></td><td>±1 mm (예상)</td><td>가운데 실측</td></tr>
+  <tr><td>dy (옆)</td><td>±1.5 mm</td><td><b>±1 mm</b></td><td>바깥 실측</td></tr>
+  <tr><td>dz</td><td>±1.5 mm</td><td>±1.5 mm</td><td>정리 상태 확인</td></tr>
+  <tr><td>yaw</td><td>±2° (실회전 미검증)</td><td><b>±0.6~1°</b></td><td>바깥 실측</td></tr>
+  <tr><td>roll / pitch</td><td>±1~2° (“평평” 가정)</td><td>±1~2°</td><td>사전값</td></tr>
+  <tr><td>ABS 추가 오차</td><td colspan="2">아래층 ±1 mm ~ 위층 ±4~7 mm</td><td>태그 거리</td></tr>
+</table></div>
+</section>
+
+<section id="problems">
+<h2>5. 문제와 해결</h2>
+<div class="table-wrap"><table>
+  <tr><th>#</th><th>문제</th><th>원인</th><th>해결</th></tr>
+  <tr><td>1</td><td>SDK가 카메라를 열지 못함</td><td>USB udev 규칙 미설치</td><td>규칙 복사 + <code>udevadm</code> 재로드</td></tr>
+  <tr><td>2</td><td>왜곡 보정 값 이상 (k1 = −1.08)</td><td>8계수 rational 모델인데 5계수만 사용</td><td>OpenCV rational 8계수 사용</td></tr>
+  <tr><td>3</td><td>박스 높이 5 cm라 큰 태그 불가</td><td>지그 크기</td><td>36 mm 태그 2개 띠 → 인쇄로 간격 고정, 정확도도 향상</td></tr>
+  <tr><td>4</td><td>depth와 태그 모델이 면마다 ±5 mm 불일치</td><td>먼 거리의 작은 태그 자세 오차 + depth 노이즈</td><td><b>위아래 층 면으로 국소 보정</b></td></tr>
+  <tr><td>5</td><td>국소 보정 발산 (10~250 mm)</td><td>카메라 원점 기준 회전, 반복 패턴에 잘못 맞춤</td><td>목표 블록 중심 기준, depth만 사용, 사전값 제한</td></tr>
+  <tr><td>6</td><td>roll/pitch 50° 이상 튐</td><td>Huber가 사전값 항까지 약화</td><td><b>IRLS</b>: robust 가중치는 데이터 항에만</td></tr>
+  <tr><td>7</td><td>경계선 검출 실패</td><td>틈 대비 약함, 각인/배경이 더 강함</td><td>윤곽 법선 방향 밝기 기울기, 흐림→선명 2단계</td></tr>
+  <tr><td>8</td><td>블록을 뺄수록 pitch 증가 (4~6°)</td><td>튀어나온 끝면 <b>위쪽 테두리 depth가 뒤 면과 섞임</b></td><td>면 테두리 5 mm 제외 → 3.7° → 1.2°</td></tr>
+  <tr><td>9</td><td>측정값이 실제의 70~80%</td><td>(a) 경계선 항이 안쪽 선에 끌림 (b) <b>센서가 작은 단차를 뭉갬</b></td><td>(a) 법선 오프셋은 depth만 (b) <b>depth 1280×800 + Close Range High Accuracy</b> → 10 mm가 9.8 mm로</td></tr>
+  <tr><td>10</td><td>뒤에서 본 값이 크게 틀림 (yaw +10°)</td><td>안쪽으로 들어간 끝면은 구멍 벽에 가려 depth 비대칭</td><td>들어간 끝면 측정의 신뢰도 하향</td></tr>
+  <tr><td>11</td><td>합산 시 엉뚱한 yaw가 섞임</td><td>계산상 1σ가 실제보다 너무 작음</td><td>보이는 면 종류별 실험 1σ 하한 + 축별 가중 중앙값</td></tr>
+  <tr><td>12</td><td>위아래 층이 같이 밀리면 측정에서 사라짐</td><td>국소 보정이 이웃 층을 기준으로 가정</td><td><b>ABS / REL 분리</b>: 태그 오차는 시점마다 달라 상쇄, 실제 이동은 남음</td></tr>
+  <tr><td>13</td><td>저장 사진이 쓸모없음</td><td>수동 저장 중 카메라 이동</td><td>측정 프레임 <b>자동 녹화</b> + 사후 재분석 도구</td></tr>
+</table></div>
+</section>
+
+<section id="height">
+<h2>6. 층 높이별 정확도 · 개선 아이디어</h2>
+<div class="table-wrap"><table>
+  <tr><th>구간</th><th>REL (이웃 대비)</th><th>ABS (기준 대비)</th><th>이유</th></tr>
+  <tr><td>아래층 (2~5층)</td><td>±1~2 mm</td><td><span class="pill good">±1 mm 수준</span></td><td>태그와 가까워 카메라 자세 정확</td></tr>
+  <tr><td>중간층 (6~12층)</td><td>±1 mm, ±1~2°</td><td>±2~3 mm</td><td>태그와 블록을 함께 담으려면 거리가 늘어남</td></tr>
+  <tr><td>위층 (13~17층)</td><td>±1~2 mm, ±2°</td><td><span class="pill warn">±4~7 mm</span></td><td>40~45 cm로 물러나야 태그가 보임, 기준 층이 아래쪽에만</td></tr>
+</table></div>
+<p>REL은 전 높이에서 안정적이고, ABS는 <b>태그(맨 아래)와 블록 사이 거리에 비례해 나빠진다</b>. 또 손으로 쌓은 “정리 상태”도 수 mm 수준으로 완벽하게 곧지 않다 (예: 8층 부근 약 3 mm 뒤쪽).</p>
+
+<div class="two">
+  <div class="box">
+    <h4>손 촬영 단계에서 (필요할 때만)</h4>
+    <ul class="tight">
+      <li><b>기준 상태 재캡처 테이블</b>: 시연 전 정리된 타워를 훑어 블록별 실제 위치를 0으로 저장</li>
+      <li><b>중간 높이 기준점</b>: 타워 옆 고정 스탠드에 태그 → 위층 ABS 개선</li>
+      <li><b>가운데 블록 yaw</b>: 앞/뒤 끝면의 옆 위치를 함께 사용 → ±1° 목표</li>
+      <li><b>다중 프레임 공동 최적화</b>: 여러 프레임의 점/경계를 한 번에 fit</li>
+    </ul>
+  </div>
+  <div class="box">
+    <h4>로봇 장착 후 (M3)</h4>
+    <ul class="tight">
+      <li>카메라 자세를 <b>FK + hand-eye</b>로 → ABS의 태그 오차 제거 (예상 1~2 mm)</li>
+      <li>블록별 <b>촬영 자세 계획</b>: 바깥 블록은 모서리 방향, 가운데 블록은 빠져나오는 쪽 끝면</li>
+      <li>마름모 배치로 <b>양팔이 블록 양 끝을 동시에</b> 관측 → yaw·dx 강화</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="next">
+<h2>7. 앞으로 할 일</h2>
+<ol class="steps">
+  <li><b>로봇 쪽과 합의</b>: 허용 오차(몇 mm / 몇 도까지 잡을 수 있나), 인터페이스(토픽 연속 발행 vs “n층 m번 재 줘” 서비스).</li>
+  <li><b>M3 손목 장착</b> (마운트 3D 프린팅 후): hand-eye 캘리브레이션, FK 기반 카메라 자세, 촬영 자세 계획, 태그는 보조로 유지.</li>
+  <li><b>남은 확인</b>: yaw 10 mm 재측정의 자로 잰 양 끝 값 비교, 홀수층 블록의 옆면 밀기 테스트, 가운데 블록 실제 회전 테스트 (필요 시).</li>
+</ol>
+</section>
+
+<section id="usage">
+<h2>8. 사용법 · 파일 구조</h2>
+<pre><code># 환경 (최초 1회)
+python3 -m venv --system-site-packages .venv
+.venv/bin/pip install -r requirements.txt
+sudo cp .venv/lib/python3.10/site-packages/pyorbbecsdk/shared/99-obsensor-*.rules /etc/udev/rules.d/
+sudo udevadm control --reload &amp;&amp; sudo udevadm trigger   # 그 후 카메라 USB 재연결
+
+# 태그 PDF (100% 크기로 인쇄)
+.venv/bin/python tools/make_tag_pdf.py
+
+# 캘리브레이션 (태그를 다시 붙였거나 지그가 움직였을 때)
+.venv/bin/python tools/calib_capture.py          # 모서리 4곳 각 10장 이상
+.venv/bin/python tools/solve_tagmap.py           # -&gt; config/tagmap.yaml
+.venv/bin/python tools/stream_check.py data/ref  # 정리된 타워 정면/모서리 촬영 (s)
+.venv/bin/python tools/fit_tower_ref.py          # -&gt; config/tower_ref.yaml
+
+# 실시간 측정
+.venv/bin/python tools/live_block.py             # 터미널: "n m", "label X", "c", "s", "q"
+
+# 녹화 세션 재분석
+.venv/bin/python tools/analyze_session.py data/live/&lt;세션&gt; [...]</code></pre>
+
+<pre><code>config/tower.yaml          기준 타워 정의 (블록 치수, 층 수, 번호 규칙, 태그)
+config/tagmap.yaml         태그 맵 (면 4개의 상대 자세)
+config/tower_ref.yaml      태그 맵 -&gt; 타워 좌표, fit 블록 높이
+jenga6dof/camera.py        Gemini 305 래퍼 (프리셋, depth 해상도, color 정렬)
+jenga6dof/tower_model.py   (n, m) -&gt; 기준 4x4 자세
+jenga6dof/tagmap.py        태그 띠 기하, 검출, 번들 조정
+jenga6dof/localize.py      태그로 카메라 자세, 태그 맵 -&gt; 타워 좌표
+jenga6dof/estimator.py     블록 6DOF 추정 (국소 보정 + 블록 fit + 신뢰도)
+jenga6dof/ros_pub.py       ROS2 발행
+tools/                     PDF 생성, 캘리브레이션, 실시간 측정, 평가/분석
+tags/                      인쇄용 태그 PDF
+docs/                      이 보고서 (md / html)</code></pre>
+</section>
+
+<footer>JENGA_6DOF · 세션 보고서 · 2026-10-22 · 손 촬영 단계(M0~M2) 마무리</footer>
+</main>
+</body>
+</html>
